@@ -16,7 +16,7 @@ router.post('/', createProduct);
 router.get('/', getAllProducts);
 
 // Get a single product by ID
-router.get('/:id', getProductById);
+router.get('/', getProductById);
 
 // Update a product
 router.put('/:id', updateProduct);
