@@ -38,7 +38,8 @@ export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const product = await Product.findById(id).populate('seller').populate('category');
+    const product = await Product.findById(id);
+    // const product = await Product.findById(id).populate('seller').populate('category');
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -75,9 +76,7 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-
     const deletedProduct = await Product.findByIdAndDelete(id);
-
     if (!deletedProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
