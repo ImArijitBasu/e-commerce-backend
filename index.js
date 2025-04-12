@@ -21,6 +21,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes); // Corrected route
 
+
+
+app.get('/', (req, res) => {
+    res.send('API is running...');
+});
+
 app.listen(process.env.PORT || 5000, () => {
     console.log('Server running on port', process.env.PORT || 5000);
     // console.log('FIREBASE_ADMIN_CREDENTIALS:', process.env.FIREBASE_ADMIN_CREDENTIALS);

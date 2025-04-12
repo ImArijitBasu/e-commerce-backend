@@ -6,22 +6,15 @@ import {
   updateProduct,
   deleteProduct,
 } from '../controllers/productController.js';
+import { verifyToken } from '../middleware/verifyToken.js';
 
 const router = express.Router();
 
-// Create a new product
-router.post('/', createProduct);
-
-// Get all products
+// Apply auth middleware where needed
+router.post('/', verifyToken, createProduct);
 router.get('/', getAllProducts);
-
-// Get a single product by ID
-router.get('/', getProductById);
-
-// Update a product
-router.put('/:id', updateProduct);
-
-// Delete a product
-router.delete('/:id', deleteProduct);
+router.get('/:id', getProductById);
+router.put('/:id', verifyToken, updateProduct);
+router.delete('/:id', verifyToken, deleteProduct);
 
 export { router as productRoutes };

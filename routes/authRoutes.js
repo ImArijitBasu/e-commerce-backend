@@ -1,41 +1,19 @@
 import express from 'express';
-import dotenv from 'dotenv';
-import admin from 'firebase-admin';
-import { User } from '../models/User.js'; // Corrected import
+import { User } from '../models/User.js';
+import { verifyToken } from '../middleware/verifyToken.js'; // ✅ import middleware
 
 const router = express.Router();
-dotenv.config();
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_CREDENTIALS)),
-  });
-}
-
-// Example route
 router.post('/login', (req, res) => {
   res.send('Login route');
 });
 
-router.post('/storeUser', async (req, res) => {
+// ✅ Protected route to store/update user
+router.post('/storeUser', verifyToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header provided' });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'Invalid authorization header' });
-    }
-
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const { uid } = decodedToken;
-    if (!uid) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
+    const { uid } = req.user;
     const { displayName, email, photoURL } = req.body;
+
     if (!displayName || !email) {
       return res.status(400).json({ error: 'Missing required user data' });
     }
