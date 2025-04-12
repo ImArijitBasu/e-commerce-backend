@@ -23,4 +23,6 @@ app.use('/api/orders', orderRoutes); // Corrected route
 
 app.listen(process.env.PORT || 5000, () => {
     console.log('Server running on port', process.env.PORT || 5000);
+    // console.log('FIREBASE_ADMIN_CREDENTIALS:', process.env.FIREBASE_ADMIN_CREDENTIALS);
+
 });
