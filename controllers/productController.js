@@ -3,11 +3,12 @@ import { Product } from '../models/Product.js';
 // Create a new product
 export const createProduct = async (req, res) => {
   try {
-    const { uid, name: displayName, email } = req.user; // from Firebase token
-    const { name, description, price, stock, category, imageUrl } = req.body;
+     // ✅ Use MongoDB _id
+
+    const {seller, name, description, price, stock, category, imageUrl } = req.body;
 
     const product = new Product({
-      seller: uid,
+      seller: seller, // ✅ MongoDB ID
       name,
       description,
       price,
@@ -19,9 +20,11 @@ export const createProduct = async (req, res) => {
     await product.save();
     res.status(201).json({ message: 'Product created', product });
   } catch (error) {
+    console.error("Product creation error:", error);
     res.status(500).json({ message: 'Error creating product', error });
   }
 };
+
 
 
 // Get all products
