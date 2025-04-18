@@ -12,12 +12,6 @@ const cartSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, unique: true },
     products: [productSchema],
-    quantity: { type: Number, default: 0 },
-    totalPrice: { type: Number, default: 0 },
-
-    calculateTotalPrice: function() {
-      this.totalPrice = this.products.reduce((total, product) => total + (product.price * product.quantity), 0);
-    },
   },
   { timestamps: true }
 );
