@@ -5,7 +5,7 @@ import cors from 'cors';
 
 import { authRoutes } from './routes/authRoutes.js';
 import { productRoutes } from './routes/productRoutes.js';
-import { orderRoutes } from './routes/orderRoutes.js'; // Corrected import
+import orderRoutes from './routes/orderRoutes.js'; 
 import cartRoutes from './routes/cartRoutes.js';
 
 dotenv.config();
@@ -20,7 +20,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes); // Corrected route
+app.use('/api/orders', orderRoutes); 
 app.use('/api/cart', cartRoutes);
 
 
@@ -31,6 +31,4 @@ app.get('/', (req, res) => {
 
 app.listen(process.env.PORT || 5000, () => {
     console.log('Server running on port', process.env.PORT || 5000);
-    // console.log('FIREBASE_ADMIN_CREDENTIALS:', process.env.FIREBASE_ADMIN_CREDENTIALS);
-
 });
