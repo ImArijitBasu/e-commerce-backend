@@ -18,26 +18,32 @@ router.post('/:userId', async (req, res) => {
   const { product } = req.body;
   const { userId } = req.params;
 
+  if (!product || !product._id || !product.name || !product.price) {
+    return res.status(400).json({ message: "Invalid product data" });
+  }
+
   try {
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      cart = new Cart({ userId, products: [{ ...product, quantity: 1 }] });
+      cart = new Cart({ userId, products: [{ ...product, quantity: product.quantity || 1 }] });
     } else {
       const index = cart.products.findIndex((p) => p._id === product._id);
       if (index > -1) {
-        cart.products[index].quantity += 1;
+        cart.products[index].quantity += product.quantity || 1;
       } else {
-        cart.products.push({ ...product, quantity: 1 });
+        cart.products.push({ ...product, quantity: product.quantity || 1 });
       }
     }
 
     await cart.save();
     res.json(cart);
   } catch (err) {
+    console.error("❌ Error saving cart:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // PUT update quantity
 router.put('/:userId/:productId', async (req, res) => {
