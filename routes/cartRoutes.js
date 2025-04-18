@@ -13,34 +13,46 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
-// POST add or update product in cart
 router.post('/:userId', async (req, res) => {
-  const { product } = req.body;
-  const { userId } = req.params;
-
-  if (!product || !product._id || !product.name || !product.price) {
-    return res.status(400).json({ message: "Invalid product data" });
-  }
-
   try {
-    let cart = await Cart.findOne({ userId });
+    const { userId } = req.params;
+    const { shipping, payment } = req.body;
 
-    if (!cart) {
-      cart = new Cart({ userId, products: [{ ...product, quantity: product.quantity || 1 }] });
-    } else {
-      const index = cart.products.findIndex((p) => p._id === product._id);
-      if (index > -1) {
-        cart.products[index].quantity += product.quantity || 1;
-      } else {
-        cart.products.push({ ...product, quantity: product.quantity || 1 });
-      }
+    // Fetch the current cart
+    const cart = await Cart.findOne({ userId }).populate('products._id');
+    if (!cart || cart.products.length === 0) {
+      return res.status(400).json({ message: 'Cart is empty' });
     }
 
-    await cart.save();
-    res.json(cart);
+    // Build order items
+    const items = cart.products.map((p) => ({
+      product: p._id._id,
+      quantity: p.quantity,
+      price: p.price,
+    }));
+
+    // Compute totalAmount
+    const totalAmount = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+
+    // Create and save the order
+    const order = new Order({
+      user: userId,
+      items,
+      totalAmount,
+      cartDetails: { shipping, payment },
+      status: 'pending',
+      paymentStatus: 'unpaid',
+      createdAt: Date.now(),
+    });
+    await order.save();
+
+    // Clear the user's cart
+    await Cart.findOneAndDelete({ userId });
+
+    return res.status(201).json({ message: 'Order placed successfully', order });
   } catch (err) {
-    console.error("❌ Error saving cart:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error('Error creating order:', err);
+    return res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
 

@@ -1,34 +1,32 @@
+// routes/orderRoutes.js
 import express from 'express';
 import { Order } from '../models/Order.js';
 import { Cart } from '../models/Cart.js';
-import { authMiddleware } from '../middleware/auth.js'; // your auth guard
 
 const router = express.Router();
 
-// Create a new order
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/:userId', async (req, res) => {
   try {
-    const userId = req.user._id;
+    const { userId } = req.params;
     const { shipping, payment } = req.body;
 
-    // Fetch the current cart
+    // 1. Fetch the current cart
     const cart = await Cart.findOne({ userId });
-    if (!cart || !cart.products.length) {
+    if (!cart || cart.products.length === 0) {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
-    // Build order items
+    // 2. Build order items
     const items = cart.products.map(p => ({
       product: p._id,
       quantity: p.quantity,
       price: p.price,
     }));
 
-    // Compute total
-    const totalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
-      // optionally apply shipping/payment fields
+    // 3. Compute totalAmount
+    const totalAmount = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
 
-    // Create order
+    // 4. Create and save the order
     const order = new Order({
       user: userId,
       items,
@@ -36,39 +34,45 @@ router.post('/', authMiddleware, async (req, res) => {
       status: 'pending',
       paymentStatus: 'unpaid',
       createdAt: Date.now(),
-      // you can embed shipping & payment details in schema if desired
+      // if you want to store shipping/payment details on the order, add them here
     });
     await order.save();
 
-    // Clear cart
+    // 5. Clear the user's cart
     await Cart.findOneAndDelete({ userId });
 
-    res.status(201).json(order);
+    return res.status(201).json({ message: 'Order placed', order });
   } catch (err) {
     console.error('Error creating order:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Get current user's orders
-router.get('/', authMiddleware, async (req, res) => {
+
+router.get('/:userId', async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).populate('items.product');
-    res.json(orders);
+    const { userId } = req.params;
+    const orders = await Order.find({ user: userId })
+      .populate('items.product', 'name price imageUrl');
+    return res.json(orders);
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error fetching orders:', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// (Optional) Get single order by ID
-router.get('/:orderId', authMiddleware, async (req, res) => {
+router.get('/:userId/:orderId', async (req, res) => {
   try {
-    const order = await Order.findOne({ _id: req.params.orderId, user: req.user._id })
-      .populate('items.product');
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-    res.json(order);
+    const { userId, orderId } = req.params;
+    const order = await Order.findOne({ _id: orderId, user: userId })
+      .populate('items.product', 'name price imageUrl');
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    return res.json(order);
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error fetching order:', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
